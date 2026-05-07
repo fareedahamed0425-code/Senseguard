@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SenseGuard AI — Intelligent Gaming Companion</title>
+  <meta name="description" content="SenseGuard AI: Always-on gaming performance intelligence. Sensitivity, FPS, thermals, and post-match reviews — all in one precision dashboard." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Ambient Background -->
+  <div class="ambient-bg">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- HUD Alert Bar -->
+  <div id="hud-alert" class="hud-alert hidden">
+    <span class="hud-dot"></span>
+    <span id="hud-text">Alert text here</span>
+    <button class="hud-dismiss" onclick="dismissHUD()">✕</button>
+  </div>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="14" stroke="url(#brand-grad)" stroke-width="2"/>
+          <path d="M10 16 L14 12 L18 16 L22 12" stroke="url(#brand-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="16" cy="19" r="2.5" fill="url(#brand-grad)"/>
+          <defs>
+            <linearGradient id="brand-grad" x1="0" y1="0" x2="32" y2="32">
+              <stop offset="0%" stop-color="#7c3aed"/>
+              <stop offset="100%" stop-color="#06b6d4"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">SenseGuard</span>
+        <span class="brand-sub">AI v2.0</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-panel="dashboard" onclick="switchPanel('dashboard', this)">
+        <span class="nav-icon">⬡</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="sensitivity" onclick="switchPanel('sensitivity', this)">
+        <span class="nav-icon">◎</span>
+        <span>Sensitivity</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="performance" onclick="switchPanel('performance', this)">
+        <span class="nav-icon">▲</span>
+        <span>Performance</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="system" onclick="switchPanel('system', this)">
+        <span class="nav-icon">⚙</span>
+        <span>System</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="review" onclick="switchPanel('review', this)">
+        <span class="nav-icon">◈</span>
+        <span>Review</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="predict" onclick="switchPanel('predict', this)">
+        <span class="nav-icon">◇</span>
+        <span>Predict</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-status">
+      <div class="status-row">
+        <span class="status-dot pulse-green"></span>
+        <span class="status-label">Agents Online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-val" id="sidebar-mode">Gaming</span>
+        <span class="status-label">Mode</span>
+      </div>
+      <div class="permission-badge" id="permission-badge">Ask Before Acting</div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- ===================== DASHBOARD PANEL ===================== -->
+    <section class="panel active" id="panel-dashboard">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Command Center</h1>
+          <p class="panel-subtitle" id="session-subtitle">No active session — configure your profile to begin</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" onclick="openSessionModal()">Load Session</button>
+          <button class="btn btn-primary pulse-btn" id="session-toggle" onclick="toggleSession()">Start Session</button>
+        </div>
+      </div>
+
+      <!-- Agent Status Grid -->
+      <div class="agent-grid">
+        <div class="agent-card" id="agent-sensitivity">
+          <div class="agent-header">
+            <div class="agent-icon sensitivity-icon">◎</div>
+            <div>
+              <div class="agent-name">Sensitivity Agent</div>
+              <div class="agent-status" id="sens-status">Standby</div>
+            </div>
+            <div class="agent-badge" id="sens-badge">—</div>
+          </div>
+          <div class="agent-metric">
+            <span class="metric-label">API Score</span>
+            <span class="metric-value" id="dash-api">—</span>
+          </div>
+          <div class="agent-metric">
+            <span class="metric-label">Current Sens</span>
+            <span class="metric-value" id="dash-sens">—</span>
+          </div>
+          <div class="mini-bar-wrap">
+            <div class="mini-bar sensitivity-bar" id="api-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="agent-card" id="agent-performance">
+          <div class="agent-header">
+            <div class="agent-icon performance-icon">▲</div>
+            <div>
+              <div class="agent-name">Performance Agent</div>
+              <div class="agent-status" id="perf-status">Standby</div>
+            </div>
+            <div class="agent-badge" id="perf-badge">—</div>
+          </div>
+          <div class="agent-metric">
+            <span class="metric-label">Avg FPS</span>
+            <span class="metric-value" id="dash-fps">—</span>
+          </div>
+          <div class="agent-metric">
+            <span class="metric-label">Ping</span>
+            <span class="metric-value" id="dash-ping">—</span>
+          </div>
+          <div class="mini-bar-wrap">
+            <div class="mini-bar performance-bar" id="fps-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="agent-card" id="agent-system">
+          <div class="agent-header">
+            <div class="agent-icon system-icon">⚙</div>
+            <div>
+              <div class="agent-name">System Agent</div>
+              <div class="agent-status" id="sys-status">Standby</div>
+            </div>
+            <div class="agent-badge" id="sys-badge">—</div>
+          </div>
+          <div class="agent-metric">
+            <span class="metric-label">GPU Temp</span>
+            <span class="metric-value" id="dash-gpu-temp">—</span>
+          </div>
+          <div class="agent-metric">
+            <span class="metric-label">CPU Temp</span>
+            <span class="metric-value" id="dash-cpu-temp">—</span>
+          </div>
+          <div class="mini-bar-wrap">
+            <div class="mini-bar system-bar" id="temp-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="agent-card review-agent-card" id="agent-review">
+          <div class="agent-header">
+            <div class="agent-icon review-icon">◈</div>
+            <div>
+              <div class="agent-name">Review Agent</div>
+              <div class="agent-status" id="rev-status">Awaiting session end</div>
+            </div>
+          </div>
+          <div class="review-placeholder" id="review-placeholder">
+            <p>Post-match review generated automatically when session ends.</p>
+          </div>
+          <div class="review-quick" id="review-quick" style="display:none">
+            <div class="review-quick-row" id="rq-summary"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Metrics Row -->
+      <div class="metrics-row" id="live-metrics" style="display:none">
+        <div class="metric-tile">
+          <div class="tile-label">FPS</div>
+          <div class="tile-value fps-value" id="live-fps">—</div>
+          <div class="tile-sub" id="live-fps-min">Min: —</div>
+        </div>
+        <div class="metric-tile">
+          <div class="tile-label">PING</div>
+          <div class="tile-value" id="live-ping">—</div>
+          <div class="tile-sub">ms</div>
+        </div>
+        <div class="metric-tile">
+          <div class="tile-label">GPU °C</div>
+          <div class="tile-value" id="live-gpu">—</div>
+          <div class="tile-sub" id="live-gpu-sub">Nominal</div>
+        </div>
+        <div class="metric-tile">
+          <div class="tile-label">CPU °C</div>
+          <div class="tile-value" id="live-cpu">—</div>
+          <div class="tile-sub" id="live-cpu-sub">Nominal</div>
+        </div>
+        <div class="metric-tile">
+          <div class="tile-label">API</div>
+          <div class="tile-value" id="live-api">—</div>
+          <div class="tile-sub" id="live-api-delta">vs baseline</div>
+        </div>
+        <div class="metric-tile">
+          <div class="tile-label">SENS</div>
+          <div class="tile-value" id="live-sens-val">—</div>
+          <div class="tile-sub">current</div>
+        </div>
+      </div>
+
+      <!-- Event Feed -->
+      <div class="event-feed" id="event-feed">
+        <div class="feed-header">
+          <span class="feed-title">Event Log</span>
+          <span class="feed-count" id="feed-count">0 events</span>
+        </div>
+        <div class="feed-list" id="feed-list">
+          <div class="feed-empty">No events yet. Start a session to begin monitoring.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SENSITIVITY PANEL ===================== -->
+    <section class="panel" id="panel-sensitivity">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Sensitivity Agent</h1>
+          <p class="panel-subtitle">Aim Performance Index tracking and calibration</p>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Current Profile</div>
+          <div class="sens-profile" id="sens-profile-display">
+            <div class="profile-game" id="sp-game">No Game Active</div>
+            <div class="profile-sens-display">
+              <span class="sens-big" id="sp-current">—</span>
+              <span class="sens-unit">sens</span>
+            </div>
+            <div class="sens-range-bar">
+              <div class="range-track">
+                <div class="range-fill" id="sp-range-fill" style="left:0%; width:100%"></div>
+                <div class="range-thumb" id="sp-range-thumb" style="left:50%"></div>
+              </div>
+              <div class="range-labels">
+                <span id="sp-min">—</span>
+                <span>Optimal Range</span>
+                <span id="sp-max">—</span>
+              </div>
+            </div>
+            <div class="api-gauge-wrap">
+              <div class="api-label">API Score</div>
+              <div class="api-gauge">
+                <div class="gauge-arc">
+                  <svg viewBox="0 0 120 80" class="gauge-svg">
+                    <path d="M10,70 A 50,50 0 0,1 110,70" fill="none" stroke="#1e1e2e" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M10,70 A 50,50 0 0,1 110,70" fill="none" stroke="url(#gaugeGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="157" id="gauge-path" stroke-dashoffset="80"/>
+                    <defs>
+                      <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#7c3aed"/>
+                        <stop offset="100%" stop-color="#06b6d4"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <div class="gauge-val" id="sp-api">—</div>
+              </div>
+              <div class="api-baseline-row">
+                <span>Baseline: <strong id="sp-baseline">—</strong></span>
+                <span id="sp-delta-text" class="delta-text">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Calibration Controls</div>
+          <div class="calibration-controls">
+            <div class="ctrl-group">
+              <label class="ctrl-label">Manual Sensitivity Override</label>
+              <div class="ctrl-row">
+                <input type="range" min="0.1" max="5" step="0.01" value="1.0" class="sens-slider" id="manual-sens-slider" oninput="updateManualSens(this.value)"/>
+                <span class="slider-val" id="manual-sens-val">1.00</span>
+              </div>
+            </div>
+            <div class="ctrl-group">
+              <label class="ctrl-label">Auto-Apply Mode</label>
+              <div class="toggle-row">
+                <div class="toggle" id="auto-apply-toggle" onclick="toggleAutoApply()">
+                  <div class="toggle-knob"></div>
+                </div>
+                <span class="toggle-label" id="auto-apply-label">Disabled — Ask before applying</span>
+              </div>
+            </div>
+            <div class="ctrl-group">
+              <label class="ctrl-label">Recalibrate Baseline</label>
+              <button class="btn btn-ghost w-full" onclick="recalibrateBaseline()">Run Calibration Session</button>
+            </div>
+            <div class="ctrl-group">
+              <label class="ctrl-label">Sensitivity History</label>
+              <div class="history-list" id="sens-history-list">
+                <div class="history-empty">No adjustments logged yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PERFORMANCE PANEL ===================== -->
+    <section class="panel" id="panel-performance">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Performance Agent</h1>
+          <p class="panel-subtitle">FPS, frame pacing, input lag, VRAM & network</p>
+        </div>
+      </div>
+      <div class="perf-metrics-grid">
+        <div class="perf-tile" id="pt-fps">
+          <div class="pt-icon">⬡</div>
+          <div class="pt-label">Average FPS</div>
+          <div class="pt-value" id="pt-fps-val">—</div>
+          <div class="pt-bar-wrap"><div class="pt-bar fps-col" id="pt-fps-bar" style="width:0%"></div></div>
+          <div class="pt-sub" id="pt-fps-status">No data</div>
+        </div>
+        <div class="perf-tile" id="pt-minfps">
+          <div class="pt-icon">▼</div>
+          <div class="pt-label">Min FPS (1%)</div>
+          <div class="pt-value" id="pt-minfps-val">—</div>
+          <div class="pt-bar-wrap"><div class="pt-bar warn-col" id="pt-minfps-bar" style="width:0%"></div></div>
+          <div class="pt-sub" id="pt-minfps-status">No data</div>
+        </div>
+        <div class="perf-tile" id="pt-ping">
+          <div class="pt-icon">◉</div>
+          <div class="pt-label">Network Ping</div>
+          <div class="pt-value" id="pt-ping-val">—</div>
+          <div class="pt-bar-wrap"><div class="pt-bar ping-col" id="pt-ping-bar" style="width:0%"></div></div>
+          <div class="pt-sub" id="pt-ping-status">No data</div>
+        </div>
+        <div class="perf-tile" id="pt-vram">
+          <div class="pt-icon">◧</div>
+          <div class="pt-label">VRAM Pressure</div>
+          <div class="pt-value" id="pt-vram-val">—</div>
+          <div class="pt-bar-wrap"><div class="pt-bar vram-col" id="pt-vram-bar" style="width:0%"></div></div>
+          <div class="pt-sub" id="pt-vram-status">No data</div>
+        </div>
+        <div class="perf-tile" id="pt-lag">
+          <div class="pt-icon">◁</div>
+          <div class="pt-label">Input Lag Δ</div>
+          <div class="pt-value" id="pt-lag-val">—</div>
+          <div class="pt-bar-wrap"><div class="pt-bar lag-col" id="pt-lag-bar" style="width:0%"></div></div>
+          <div class="pt-sub" id="pt-lag-status">No data</div>
+        </div>
+        <div class="perf-tile" id="pt-pace">
+          <div class="pt-icon">≋</div>
+          <div class="pt-label">Frame Pacing</div>
+          <div class="pt-value" id="pt-pace-val">—</div>
+          <div class="pt-bar-wrap"><div class="pt-bar pace-col" id="pt-pace-bar" style="width:0%"></div></div>
+          <div class="pt-sub" id="pt-pace-status">No data</div>
+        </div>
+      </div>
+      <div class="card mt-20">
+        <div class="card-title">Performance Timeline</div>
+        <div class="timeline-chart-wrap">
+          <canvas id="perf-timeline" height="120"></canvas>
+          <div class="chart-placeholder" id="chart-placeholder">Start a session to see the performance timeline.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SYSTEM PANEL ===================== -->
+    <section class="panel" id="panel-system">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">System Agent</h1>
+          <p class="panel-subtitle">Power plan, thermals, RAM, background processes</p>
+        </div>
+        <div class="header-actions">
+          <select class="mode-select" id="mode-select" onchange="changeMode(this.value)">
+            <option value="Gaming">Gaming</option>
+            <option value="Creation">Creation</option>
+            <option value="Productivity">Productivity</option>
+            <option value="Idle">Idle</option>
+            <option value="Battery">Battery</option>
+          </select>
+        </div>
+      </div>
+      <div class="system-grid">
+        <div class="card">
+          <div class="card-title">Hardware Status</div>
+          <div class="hw-rows">
+            <div class="hw-row">
+              <span class="hw-label">GPU</span>
+              <span class="hw-val" id="hw-gpu">—</span>
+            </div>
+            <div class="hw-row">
+              <span class="hw-label">CPU</span>
+              <span class="hw-val" id="hw-cpu">—</span>
+            </div>
+            <div class="hw-row">
+              <span class="hw-label">RAM</span>
+              <span class="hw-val" id="hw-ram">—</span>
+            </div>
+            <div class="hw-row">
+              <span class="hw-label">Power Plan</span>
+              <span class="hw-val" id="hw-power">—</span>
+            </div>
+          </div>
+          <div class="thermal-section">
+            <div class="thermal-row">
+              <span class="thermal-label">GPU Temp</span>
+              <div class="thermal-bar-wrap">
+                <div class="thermal-bar" id="gpu-thermal-bar" style="width:0%"></div>
+              </div>
+              <span class="thermal-temp" id="gpu-thermal-val">—</span>
+            </div>
+            <div class="thermal-row">
+              <span class="thermal-label">CPU Temp</span>
+              <div class="thermal-bar-wrap">
+                <div class="thermal-bar cpu-thermal" id="cpu-thermal-bar" style="width:0%"></div>
+              </div>
+              <span class="thermal-temp" id="cpu-thermal-val">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Active Processes <span class="process-count" id="proc-count">0</span></div>
+          <div class="process-list" id="process-list">
+            <div class="proc-empty">No session loaded. Processes appear here during monitoring.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Mode Profile</div>
+          <div class="mode-profile" id="mode-profile">
+            <div class="mode-title" id="mode-title">Gaming</div>
+            <ul class="mode-rules" id="mode-rules">
+              <li>High Performance power plan active</li>
+              <li>Non-critical background processes suspended</li>
+              <li>GPU performance mode enabled</li>
+              <li>QoS routing for game traffic</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== REVIEW PANEL ===================== -->
+    <section class="panel" id="panel-review">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Review Agent</h1>
+          <p class="panel-subtitle">Structured post-match intelligence</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" onclick="generateMockReview()">Generate Demo Review</button>
+        </div>
+      </div>
+      <div class="review-container" id="review-container">
+        <div class="review-empty-state" id="review-empty">
+          <div class="empty-icon">◈</div>
+          <div class="empty-title">No review available</div>
+          <div class="empty-sub">Reviews are generated automatically when a session ends, or click "Generate Demo Review" above.</div>
+        </div>
+        <div class="review-card" id="review-card" style="display:none">
+          <div class="review-header">
+            <div class="review-meta" id="review-meta"></div>
+            <div class="review-score-badge" id="review-score-badge">—</div>
+          </div>
+          <div class="review-body">
+            <div class="review-section">
+              <div class="section-label strengths-label">▲ STRENGTHS</div>
+              <ul class="review-list" id="review-strengths"></ul>
+            </div>
+            <div class="review-section">
+              <div class="section-label improve-label">▼ IMPROVEMENTS</div>
+              <ul class="review-list" id="review-improvements"></ul>
+            </div>
+            <div class="review-rec">
+              <div class="rec-label">→ KEY RECOMMENDATION</div>
+              <div class="rec-text" id="review-rec-text"></div>
+            </div>
+          </div>
+          <div class="review-footer">
+            <div class="review-stats-row" id="review-stats-row"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PREDICT PANEL ===================== -->
+    <section class="panel" id="panel-predict">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Prediction Agent</h1>
+          <p class="panel-subtitle">Proactive forecasting from historical session trends</p>
+        </div>
+      </div>
+      <div class="predict-grid">
+        <div class="card">
+          <div class="card-title">Sensitivity Model</div>
+          <div id="predict-sens-model">
+            <div class="predict-empty">Load a session to build the preference model.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Thermal Forecast</div>
+          <div id="predict-thermal">
+            <div class="predict-empty">No thermal trend data yet.</div>
+          </div>
+        </div>
+        <div class="card wide-card">
+          <div class="card-title">Upcoming Risks</div>
+          <div id="predict-risks">
+            <div class="predict-empty">Risk modelling requires at least one completed session.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================== SESSION MODAL ===================== -->
+  <div class="modal-overlay" id="session-modal" style="display:none" onclick="closeModalOnOverlay(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Load Session State</span>
+        <button class="modal-close" onclick="closeSessionModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">Paste a session JSON object or use the demo profile below.</p>
+        <textarea id="session-json-input" class="session-textarea" placeholder='{"user": {...}, "system": {...}, "session": {...}}'></textarea>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="loadDemoSession()">Use Demo Session</button>
+          <button class="btn btn-primary" onclick="applySessionJSON()">Apply Session</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SENSITIVITY PROMPT ===================== -->
+  <div class="modal-overlay" id="sens-prompt-modal" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <span class="modal-title">⚡ Sensitivity Drift Detected</span>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint" id="sens-prompt-text">Adjusting from X to Y</p>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="rejectSensAdjust()">Reject</button>
+          <button class="btn btn-primary" onclick="acceptSensAdjust()">Accept</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

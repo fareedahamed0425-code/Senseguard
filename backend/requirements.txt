@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+websockets
+psutil
+pynput
+pywin32
+numpy
+pandas
+torch
+sqlmodel
+python-dotenv
+aiohttp
+GPUtil
