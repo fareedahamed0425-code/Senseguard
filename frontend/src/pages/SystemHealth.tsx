@@ -2,7 +2,7 @@ import React from 'react';
 import { useTelemetryStore } from '../store/useTelemetryStore';
 
 const SystemHealth: React.FC = () => {
-  const { cpuUsage, ramUsagePct, ramUsedGb, ramTotalGb, gpus, thermalThrottling, thermalMsg } = useTelemetryStore();
+  const { cpuUsage, ramUsagePct, ramUsedGb, ramTotalGb, gpus } = useTelemetryStore();
   const gpu = gpus[0] || { name: 'N/A', load: 0, temperature: 0 };
 
   return (
