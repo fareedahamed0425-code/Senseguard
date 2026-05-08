@@ -13,7 +13,8 @@ export const useWebSocket = (url: string) => {
 
   const fetchRecommendation = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:8000/status');
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const res = await fetch(`${backendUrl}/status`);
       if (res.ok) {
         const data = await res.json();
         // Update recommendation from agent

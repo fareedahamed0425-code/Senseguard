@@ -16,8 +16,9 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPage, setCurrentPage] = useState<'home' | 'lab' | 'health' | 'sessions' | 'coach' | 'settings' | 'profile'>('home');
   
-  // Connect to the Python backend
-  useWebSocket('ws://localhost:8000/ws/telemetry');
+  // Connect to the Python backend (Dynamic for Cloud Deployment)
+  const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/telemetry';
+  useWebSocket(WS_URL);
 
   // Simple route detection via URL params (standard Electron trick for multiple windows)
   const isOverlay = window.location.search.includes('overlay');

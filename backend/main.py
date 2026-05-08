@@ -71,7 +71,8 @@ def on_mouse_data(data):
     data["api_score"] = api_score
     data["instability"] = sensitivity_agent.instability_score
     # Use thread-safe way to broadcast from callback
-    asyncio.run_coroutine_threadsafe(manager.broadcast(data), loop)
+    if loop and loop.is_running():
+        asyncio.run_coroutine_threadsafe(manager.broadcast(data), loop)
 
 def on_system_data(data):
     perf_analysis = performance_agent.analyze_system_latency()
@@ -82,33 +83,72 @@ def on_system_data(data):
     data["thermal_throttling"] = throttling
     data["thermal_msg"] = msg
     
-    asyncio.run_coroutine_threadsafe(manager.broadcast(data), loop)
+    if loop and loop.is_running():
+        asyncio.run_coroutine_threadsafe(manager.broadcast(data), loop)
 
 def on_active_window(data):
     global _current_active_window
     _current_active_window = data
     logger.info(f"Active window: [{data['process_name']}] {data['display_name']}")
-    asyncio.run_coroutine_threadsafe(manager.broadcast(data), loop)
+    if loop and loop.is_running():
+        asyncio.run_coroutine_threadsafe(manager.broadcast(data), loop)
 
-# Initialize Sensors
-mouse_sensor = MouseSensor(callback=on_mouse_data)
-system_sensor = SystemSensor(callback=on_system_data, interval=2.0)
-active_window_sensor = ActiveWindowSensor(callback=on_active_window, interval=1.0)
+# Initialize Sensors with Cloud Fallback
+try:
+    mouse_sensor = MouseSensor(callback=on_mouse_data)
+    system_sensor = SystemSensor(callback=on_system_data, interval=2.0)
+    active_window_sensor = ActiveWindowSensor(callback=on_active_window, interval=1.0)
+    CLOUD_MODE = False
+except Exception as e:
+    logger.warning(f"Hardware sensors unavailable ({e}). Entering CLOUD MOCK MODE.")
+    CLOUD_MODE = True
+
+async def mock_sensor_loop():
+    """Generates fake data when running in the cloud (Render/Vercel)"""
+    import random
+    while True:
+        if CLOUD_MODE:
+            # Mock System Data
+            mock_sys = {
+                "type": "system",
+                "cpu_usage": random.uniform(10, 60),
+                "ram_usage_pct": random.uniform(30, 70),
+                "ram_used_gb": 8.5,
+                "ram_total_gb": 16.0,
+                "gpus": [{"name": "Cloud GPU", "load": random.uniform(0, 100), "temperature": random.uniform(40, 70)}]
+            }
+            on_system_data(mock_sys)
+            await asyncio.sleep(2)
+        else:
+            await asyncio.sleep(10)
 
 @app.on_event("startup")
 async def startup_event():
     global loop
     loop = asyncio.get_running_loop()
-    mouse_sensor.start()
-    system_sensor.start()
-    active_window_sensor.start()
-    logger.info("SenseGuard Sensors Started")
+    
+    if not CLOUD_MODE:
+        try:
+            mouse_sensor.start()
+            system_sensor.start()
+            active_window_sensor.start()
+            logger.info("SenseGuard Hardware Sensors Started")
+        except Exception as e:
+            logger.error(f"Failed to start hardware sensors: {e}")
+    
+    # Start the mock loop anyway as a heartbeat or fallback
+    asyncio.create_task(mock_sensor_loop())
+    logger.info(f"SenseGuard AI Core Started (Mode: {'Cloud' if CLOUD_MODE else 'Hardware'})")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    mouse_sensor.stop()
-    system_sensor.stop()
-    active_window_sensor.stop()
+    if not CLOUD_MODE:
+        try:
+            mouse_sensor.stop()
+            system_sensor.stop()
+            active_window_sensor.stop()
+        except:
+            pass
     logger.info("SenseGuard Sensors Stopped")
 
 @app.websocket("/ws/telemetry")
