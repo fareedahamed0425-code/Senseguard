@@ -7,17 +7,19 @@ import AICoach from './pages/AICoach';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import SplashScreen from './pages/SplashScreen';
-import Auth from './pages/Auth';
 import { OverlayHUD } from './overlay/OverlayHUD';
 import { useWebSocket } from './hooks/useWebSocket';
 
 function App() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPage, setCurrentPage] = useState<'home' | 'lab' | 'health' | 'sessions' | 'coach' | 'settings' | 'profile'>('home');
   
+  // Dynamic Port Discovery
+  const urlParams = new URLSearchParams(window.location.search);
+  const backendPort = urlParams.get('backendPort') || '8000';
+  
   // Connect to the Python backend (Dynamic for Cloud Deployment)
-  const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/telemetry';
+  const WS_URL = import.meta.env.VITE_WS_URL || `ws://localhost:${backendPort}/ws/telemetry`;
   useWebSocket(WS_URL);
 
   // Simple route detection via URL params (standard Electron trick for multiple windows)
@@ -29,10 +31,6 @@ function App() {
 
   if (!isLoaded) {
     return <SplashScreen onComplete={() => setIsLoaded(true)} />;
-  }
-
-  if (!isAuthenticated) {
-    return <Auth onLogin={() => setIsAuthenticated(true)} />;
   }
 
   return (
@@ -104,15 +102,15 @@ function App() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
         {/* TopAppBar */}
-        <header className="flex justify-between items-center px-margin h-16 w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-lg border-b border-white/10 shadow-[0_0_20px_rgba(0,180,216,0.15)]">
-          <div className="flex items-center gap-4">
+        <header className="flex justify-between items-center px-margin h-16 w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-lg border-b border-white/10 shadow-[0_0_20px_rgba(0,180,216,0.15)]" style={{ WebkitAppRegion: 'drag' } as any}>
+          <div className="flex items-center gap-4" style={{ WebkitAppRegion: 'no-drag' } as any}>
             <span className="md:hidden material-symbols-outlined text-secondary">menu</span>
             <h2 className="font-h3 text-h3 font-bold text-secondary tracking-tighter uppercase cursor-pointer" onClick={() => setCurrentPage('home')}>SenseGuard AI</h2>
             <div className="hidden lg:block h-4 w-[1px] bg-white/20 mx-2"></div>
             <span className="hidden lg:block font-label text-label text-on-surface-variant opacity-60 uppercase tracking-widest font-bold">Tactical Command</span>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6" style={{ WebkitAppRegion: 'no-drag' } as any}>
             <div className="flex gap-3 px-4 py-2 bg-surface-container-high rounded-full border border-white/10">
               <span className="material-symbols-outlined text-secondary text-[18px] cursor-pointer">notifications</span>
               <span className="material-symbols-outlined text-secondary text-[18px] cursor-pointer">sensors</span>
@@ -128,6 +126,40 @@ function App() {
                 className="w-full h-full object-cover"
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_-Gtvr_jUglCEQkGnHGeA7KNzUZd5chyuAdlpx--IQ_Vd9a2pSXlDmTRvtRIy2rx2ZfwHVD8aeLnCA6tDEHcoi2RVEcIPRzMJy9M43iiw_UXnQdmZXPfnoxfTq0wbYvoZWza0szmL1RCi0_XUPZau7RmdtX4mNBGLG_Yz3FZHnz_GFx-h8xY-ga8_-02OxYfDF-_2ViWv0oYY3RyuRCExRPVmb6PfKHUbWPa-d2FW2_Y352yWL-CtW7bQQPXqbYW66fq65lWHlQ4" 
               />
+            </div>
+
+            {/* Window Controls */}
+            <div className="flex items-center ml-2 border-l border-white/10 pl-4 gap-2">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.require('electron').ipcRenderer.send('window-minimize');
+                }}
+                className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
+                title="Minimize"
+              >
+                <span className="material-symbols-outlined text-[18px]">remove</span>
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.require('electron').ipcRenderer.send('window-maximize');
+                }}
+                className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
+                title="Maximize"
+              >
+                <span className="material-symbols-outlined text-[18px]">check_box_outline_blank</span>
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.require('electron').ipcRenderer.send('window-close');
+                }}
+                className="p-1 hover:bg-red-500/20 hover:text-red-400 rounded transition-colors text-on-surface-variant pointer-events-auto"
+                title="Close"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
             </div>
           </div>
         </header>

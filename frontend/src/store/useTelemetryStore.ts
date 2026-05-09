@@ -25,6 +25,7 @@ interface TelemetryState {
   // Agent outputs
   recommendation: string;
   instability: number;
+  deepSeekAnalysis: string;
 
   // System performance agent
   perfScore: number;
@@ -65,6 +66,7 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
 
   recommendation: 'Monitoring...',
   instability: 0,
+  deepSeekAnalysis: 'Initializing DeepSeek-V4-Pro engine...',
 
   perfScore: 100,
   perfStatus: 'optimal',
@@ -119,6 +121,11 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
           pid: data.pid ?? 0,
           isGame: data.is_game ?? false,
         },
+      });
+    } else if (data.type === 'deepseek_analysis') {
+      set({
+        deepSeekAnalysis: data.content,
+        lastUpdate: Date.now(),
       });
     }
   },

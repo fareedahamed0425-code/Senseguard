@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Tray, Menu } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { spawn } = require('child_process');
 const isDev = require('electron-is-dev');
 
@@ -9,8 +10,8 @@ let pythonProcess;
 let tray;
 
 function startBackend() {
-  // Path to python executable (assumes python is in PATH)
-  const pythonPath = 'python';
+  // Use the python executable from the virtual environment
+  const pythonPath = path.join(__dirname, '../../venv/Scripts/python.exe');
   const scriptPath = path.join(__dirname, '../../backend/main.py');
   
   pythonProcess = spawn(pythonPath, [scriptPath]);
@@ -39,9 +40,35 @@ function createWindows() {
     titleBarStyle: 'hidden',
   });
 
+  let port = 5173;
+  try {
+    const portFile = path.join(__dirname, '../dev-port.txt');
+    if (fs.existsSync(portFile)) {
+      port = fs.readFileSync(portFile, 'utf8').trim();
+    }
+  } catch (err) {
+    console.error('Failed to read dev-port.txt:', err);
+  }
+
+  // Read Backend Port
+  let backendPort = 8000;
+  try {
+    const bPortFile = path.join(__dirname, '../../backend/backend-port.txt');
+    // Simple sync wait for up to 5 seconds
+    let attempts = 0;
+    while (!fs.existsSync(bPortFile) && attempts < 50) {
+      const waitTill = new Date(new Date().getTime() + 100);
+      while (waitTill > new Date()) {}
+      attempts++;
+    }
+    if (fs.existsSync(bPortFile)) {
+      backendPort = fs.readFileSync(bPortFile, 'utf8').trim();
+    }
+  } catch (err) {}
+
   const startURL = isDev 
-    ? 'http://localhost:5174' 
-    : `file://${path.join(__dirname, '../dist/index.html')}`;
+    ? `http://localhost:${port}?backendPort=${backendPort}` 
+    : `file://${path.join(__dirname, '../dist/index.html')}?backendPort=${backendPort}`;
 
   mainWindow.loadURL(startURL);
   mainWindow.once('ready-to-show', () => mainWindow.show());
@@ -61,7 +88,14 @@ function createWindows() {
   });
 
   overlayWindow.setIgnoreMouseEvents(true, { forward: true }); // Allows interactive elements
-  overlayWindow.loadURL(`${startURL}?overlay=true`);
+  overlayWindow.loadURL(`${startURL}&overlay=true`);
+
+  overlayWindow.on('close', (e) => {
+    if (!app.isQuitting) {
+      e.preventDefault();
+      overlayWindow.hide();
+    }
+  });
 
   // IPC to handle mouse pass-through toggle if needed
   const { ipcMain } = require('electron');
@@ -69,12 +103,44 @@ function createWindows() {
     const win = BrowserWindow.fromWebContents(event.sender);
     win.setIgnoreMouseEvents(ignore, options);
   });
+
+  // Window controls
+  ipcMain.on('window-minimize', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) win.minimize();
+  });
+
+  ipcMain.on('window-maximize', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      if (win.isMaximized()) {
+        win.unmaximize();
+      } else {
+        win.maximize();
+      }
+    }
+  });
+
+  ipcMain.on('window-close', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) win.close();
+  });
 }
 
 function createTray() {
   tray = new Tray(path.join(__dirname, '../public/vite.svg')); // Placeholder icon
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Show Dashboard', click: () => mainWindow.show() },
+    { label: 'Show Dashboard', click: () => {
+      mainWindow.show();
+      mainWindow.focus();
+    }},
+    { label: 'Show HUD Overlay', click: () => {
+      if (overlayWindow) {
+        overlayWindow.show();
+        overlayWindow.focus();
+      }
+    }},
+    { type: 'separator' },
     { label: 'Optimize Now', click: () => {/* Trigger via IPC or WebRequest */} },
     { type: 'separator' },
     { label: 'Exit SenseGuard', click: () => app.quit() }
@@ -87,6 +153,10 @@ app.whenReady().then(() => {
   startBackend();
   createWindows();
   createTray();
+});
+
+app.on('before-quit', () => {
+  app.isQuitting = true;
 });
 
 app.on('window-all-closed', () => {

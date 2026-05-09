@@ -1,0 +1,13 @@
+{
+  "name": "senseguard-monorepo",
+  "private": true,
+  "scripts": {
+    "setup": "setup.bat",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:electron": "cd frontend && npm run electron",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:electron\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

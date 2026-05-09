@@ -13,7 +13,9 @@ export const useWebSocket = (url: string) => {
 
   const fetchRecommendation = useCallback(async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const urlParams = new URLSearchParams(window.location.search);
+      const backendPort = urlParams.get('backendPort') || '8000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || `http://localhost:${backendPort}`;
       const res = await fetch(`${backendUrl}/status`);
       if (res.ok) {
         const data = await res.json();

@@ -5,7 +5,7 @@ const Dashboard: React.FC = () => {
   const {
     apiScore, cpuUsage, gpus, ramUsagePct, ramUsedGb, ramTotalGb,
     mouseVelocityHistory, recommendation, connectionStatus, thermalThrottling, thermalMsg,
-    activeWindow,
+    activeWindow, deepSeekAnalysis
   } = useTelemetryStore();
 
   const gpuLoad = gpus[0]?.load ?? 0;
@@ -53,6 +53,13 @@ const Dashboard: React.FC = () => {
           <p className="text-on-surface-variant font-body-md mt-2">Neural companion synchronized. Monitoring live competitive session.</p>
         </div>
         <div className="flex items-center gap-stack-md">
+          <div className="bg-secondary/10 px-4 py-2 border border-secondary/20 flex items-center gap-2 rounded-full">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">Live Scan</span>
+          </div>
           <div className="bg-surface-container-high px-4 py-2 border border-white/10 flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full animate-pulse ${connectionColor}`}></div>
             <span className="font-label text-label text-secondary uppercase tracking-widest font-bold">{connectionLabel}</span>
@@ -148,15 +155,19 @@ const Dashboard: React.FC = () => {
                 <span className="text-secondary">+{Math.max(0, apiScore - 82).toFixed(1)}% Improvement</span>
               </div>
             </div>
-            <div className="bg-primary-container/20 border border-secondary/30 p-4 rounded relative overflow-hidden">
+            <div className="bg-primary-container/20 border border-secondary/30 p-4 rounded relative overflow-hidden flex flex-col gap-3">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 shrink-0 bg-secondary/20 rounded-full flex items-center justify-center border border-secondary/50">
-                  <span className="material-symbols-outlined text-secondary">lightbulb</span>
+                  <span className="material-symbols-outlined text-secondary">psychology</span>
                 </div>
                 <div className="space-y-1">
-                  <div className="font-label text-label text-secondary uppercase tracking-widest font-bold">AI Recommendation</div>
-                  <p className="text-on-background text-body-sm italic">"{recommendation}"</p>
+                  <div className="font-label text-label text-secondary uppercase tracking-widest font-bold">DeepSeek Tactical Analysis</div>
+                  <p className="text-on-background text-body-sm font-bold leading-snug">"{deepSeekAnalysis}"</p>
                 </div>
+              </div>
+              <div className="flex items-center gap-2 border-t border-secondary/20 pt-2 mt-1">
+                 <span className="material-symbols-outlined text-secondary text-[14px]">lightbulb</span>
+                 <p className="text-on-surface-variant text-[10px] italic">Heuristic: {recommendation}</p>
               </div>
             </div>
           </div>

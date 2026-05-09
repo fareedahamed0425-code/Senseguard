@@ -2,7 +2,7 @@ import React from 'react';
 import { useTelemetryStore } from '../store/useTelemetryStore';
 
 const SystemHealth: React.FC = () => {
-  const { cpuUsage, ramUsagePct, ramUsedGb, ramTotalGb, gpus } = useTelemetryStore();
+  const { cpuUsage, ramUsagePct, ramUsedGb, ramTotalGb, gpus, deepSeekAnalysis } = useTelemetryStore();
   const gpu = gpus[0] || { name: 'N/A', load: 0, temperature: 0 };
 
   return (
@@ -77,6 +77,32 @@ const SystemHealth: React.FC = () => {
               </p>
             </div>
           )}
+        </div>
+
+        {/* DeepSeek Neural Engine Monitor */}
+        <div className="col-span-12 bg-white/5 backdrop-blur-xl border border-secondary/30 p-6 rounded-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4">
+             <div className="flex items-center gap-2 bg-secondary/10 px-3 py-1 rounded-full border border-secondary/20">
+                <span className="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse"></span>
+                <span className="text-[9px] font-bold text-secondary uppercase tracking-widest">vLLM Sychronized</span>
+             </div>
+          </div>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center border border-secondary/50 shadow-[0_0_15px_rgba(76,214,251,0.2)]">
+              <span className="material-symbols-outlined text-secondary">psychology</span>
+            </div>
+            <div>
+              <h3 className="font-h3 text-h3 text-on-background font-bold uppercase tracking-tight">DeepSeek-V4-Pro Engine</h3>
+              <p className="font-body-sm text-[10px] text-secondary font-bold uppercase tracking-widest">Neural Computation Layer</p>
+            </div>
+          </div>
+          <div className="bg-white/5 p-4 rounded border border-white/5">
+             <div className="flex justify-between items-center mb-2">
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Latest Tactical Output</span>
+                <span className="text-[10px] font-mono text-secondary">Latency: 42ms</span>
+             </div>
+             <p className="text-on-background font-body-sm italic">"{deepSeekAnalysis}"</p>
+          </div>
         </div>
 
         {/* Power Mode Controls */}

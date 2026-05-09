@@ -2,36 +2,45 @@ import React from 'react';
 import { useTelemetryStore } from '../store/useTelemetryStore';
 
 const AICoach: React.FC = () => {
-  const { apiScore, recommendation, instability, connectionStatus, mouseVelocity } = useTelemetryStore();
+  const { apiScore, recommendation, instability, connectionStatus, mouseVelocity, deepSeekAnalysis } = useTelemetryStore();
 
   const stabilityLabel = apiScore > 90 ? 'OPTIMAL' : apiScore > 70 ? 'GOOD' : 'CALIBRATE';
   const stabilityColor = apiScore > 90 ? 'text-secondary' : apiScore > 70 ? 'text-yellow-400' : 'text-error';
 
   const feedItems = [
     {
-      time: 'LIVE',
+      time: 'DEEPSEEK-V4',
+      type: 'positive',
+      msg: deepSeekAnalysis,
+    },
+    {
+      time: 'LIVE HEURISTICS',
       type: apiScore > 80 ? 'positive' : 'warning',
       msg: recommendation,
     },
     {
-      time: 'REALTIME',
+      time: 'SENSOR SCAN',
       type: 'neutral',
       msg: `Mouse velocity: ${mouseVelocity.toFixed(0)} px/s. API precision consistency: ${apiScore.toFixed(1)}%.`,
-    },
-    {
-      time: 'SESSION',
-      type: instability > 0.5 ? 'warning' : 'positive',
-      msg: instability > 0.5
-        ? `ML model detects high instability index (${instability.toFixed(2)}). Consider reducing sensitivity.`
-        : `Instability index: ${instability.toFixed(2)}. Movement patterns within optimal competitive range.`,
     },
   ];
 
   return (
     <div className="p-margin max-w-container-max mx-auto space-y-stack-lg">
       <header className="mb-stack-lg">
-        <h1 className="font-h1 text-h1 text-on-background tracking-tighter uppercase font-black">AI Tactical Coach</h1>
-        <p className="text-on-surface-variant font-body-md mt-2">Real-time heuristic analysis of your competitive performance.</p>
+        <div className="flex justify-between items-end">
+          <div>
+            <h1 className="font-h1 text-h1 text-on-background tracking-tighter uppercase font-black">AI Tactical Coach</h1>
+            <p className="text-on-surface-variant font-body-md mt-2">Real-time DeepSeek-V4-Pro analysis of your competitive performance.</p>
+          </div>
+          <div className="flex items-center gap-2 bg-secondary/10 border border-secondary/20 px-4 py-2 rounded-full mb-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">Scanning Live Data</span>
+          </div>
+        </div>
       </header>
 
       <div className="grid grid-cols-12 gap-gutter">
@@ -46,19 +55,19 @@ const AICoach: React.FC = () => {
               <div>
                 <h3 className="font-h3 text-h3 text-on-background font-bold uppercase tracking-tight">Active Intelligence Feed</h3>
                 <p className="text-secondary font-label text-[10px] uppercase tracking-[0.2em] font-bold">
-                  {connectionStatus === 'connected' ? 'Live · Heuristic engine: v4.1-alpha' : connectionStatus === 'connecting' ? 'Connecting to backend...' : '⚠ Backend offline'}
+                  {connectionStatus === 'connected' ? 'Live · Engine: DeepSeek-V4-Pro @ vLLM' : connectionStatus === 'connecting' ? 'Connecting to vLLM...' : '⚠ Backend offline'}
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 relative z-10">
               {feedItems.map((item, i) => (
-                <div key={i} className={`p-4 rounded-lg border ${item.type === 'positive' ? 'bg-secondary/10 border-secondary/30' : item.type === 'warning' ? 'bg-error/10 border-error/30' : 'bg-white/5 border-white/10'}`}>
+                <div key={i} className={`p-4 rounded-lg border transition-all duration-300 ${item.time === 'DEEPSEEK-V4' ? 'bg-secondary/20 border-secondary/50 shadow-[0_0_15px_rgba(76,214,251,0.1)]' : item.type === 'positive' ? 'bg-secondary/10 border-secondary/30' : item.type === 'warning' ? 'bg-error/10 border-error/30' : 'bg-white/5 border-white/10'}`}>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-mono text-[10px] text-on-surface-variant font-bold tracking-widest">{item.time}</span>
-                    <span className={`font-label text-[10px] uppercase tracking-widest font-bold ${item.type === 'positive' ? 'text-secondary' : item.type === 'warning' ? 'text-error' : 'text-on-surface-variant'}`}>{item.type}</span>
+                    <span className={`font-label text-[10px] uppercase tracking-widest font-bold ${item.time === 'DEEPSEEK-V4' ? 'text-secondary' : item.type === 'positive' ? 'text-secondary' : item.type === 'warning' ? 'text-error' : 'text-on-surface-variant'}`}>{item.type}</span>
                   </div>
-                  <p className="text-on-surface font-body-sm italic">"{item.msg}"</p>
+                  <p className={`font-body-sm italic ${item.time === 'DEEPSEEK-V4' ? 'text-on-background font-bold not-italic' : 'text-on-surface'}`}>"{item.msg}"</p>
                 </div>
               ))}
             </div>
