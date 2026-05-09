@@ -14,7 +14,8 @@ function startBackend() {
   const pythonPath = path.join(__dirname, '../../venv/Scripts/python.exe');
   const scriptPath = path.join(__dirname, '../../backend/main.py');
   
-  pythonProcess = spawn(pythonPath, [scriptPath]);
+  const backendDir = path.join(__dirname, '../../backend');
+  pythonProcess = spawn(pythonPath, [scriptPath], { cwd: backendDir });
 
   pythonProcess.stdout.on('data', (data) => {
     console.log(`Backend: ${data}`);

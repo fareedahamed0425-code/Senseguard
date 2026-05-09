@@ -1,10 +1,15 @@
 import asyncio
 import json
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 import uvicorn
+
+# Load environment variables
+load_dotenv()
 
 from sensors.mouse_sensor import MouseSensor
 from sensors.system_sensor import SystemSensor
@@ -18,15 +23,7 @@ from agents.deepseek_agent import DeepSeekAgent
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("SenseGuard")
 
-# app = FastAPI(title="SenseGuard AI Core") # Moved to lifespan section
 
-# Enable CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # State Management
 class ConnectionManager:
@@ -51,6 +48,9 @@ class ConnectionManager:
         for conn in dead_connections:
             self.disconnect(conn)
 
+# Global state
+loop = None
+CLOUD_MODE = False
 manager = ConnectionManager()
 sensitivity_agent = SensitivityAgent()
 system_agent = SystemAgent()
@@ -124,15 +124,10 @@ async def check_and_trigger_deepseek():
                 "timestamp": current_time
             })
 
-# Initialize Sensors with Cloud Fallback
-try:
-    mouse_sensor = MouseSensor(callback=on_mouse_data)
-    system_sensor = SystemSensor(callback=on_system_data, interval=2.0)
-    active_window_sensor = ActiveWindowSensor(callback=on_active_window, interval=1.0)
-    CLOUD_MODE = False
-except Exception as e:
-    logger.warning(f"Hardware sensors unavailable ({e}). Entering CLOUD MOCK MODE.")
-    CLOUD_MODE = True
+# Global sensor references
+mouse_sensor = None
+system_sensor = None
+active_window_sensor = None
 
 async def mock_sensor_loop():
     """Generates fake data when running in the cloud (Render/Vercel)"""
@@ -155,34 +150,58 @@ async def mock_sensor_loop():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global loop
+    global loop, mouse_sensor, system_sensor, active_window_sensor, CLOUD_MODE
     loop = asyncio.get_running_loop()
     
-    if not CLOUD_MODE:
-        try:
-            mouse_sensor.start()
-            system_sensor.start()
-            active_window_sensor.start()
-            logger.info("SenseGuard Hardware Sensors Started")
-        except Exception as e:
-            logger.error(f"Failed to start hardware sensors: {e}")
+    # Initialize Sensors inside lifespan to avoid blocking the main thread
+    try:
+        mouse_sensor = MouseSensor(callback=on_mouse_data)
+        mouse_sensor.start()
+        logger.info("Mouse sensor started")
+    except Exception as e:
+        logger.warning(f"Mouse sensor failed: {e}")
+
+    try:
+        system_sensor = SystemSensor(callback=on_system_data, interval=2.0)
+        system_sensor.start()
+        logger.info("System sensor started")
+    except Exception as e:
+        logger.warning(f"System sensor failed: {e}")
+
+    try:
+        active_window_sensor = ActiveWindowSensor(callback=on_active_window, interval=1.0)
+        active_window_sensor.start()
+        logger.info("Active window sensor started")
+    except Exception as e:
+        logger.warning(f"Active window sensor failed: {e}")
+
+    CLOUD_MODE = (mouse_sensor is None and system_sensor is None)
     
-    # Start the mock loop anyway as a heartbeat or fallback
+
+    # Start the mock loop as heartbeat/fallback
     asyncio.create_task(mock_sensor_loop())
     logger.info(f"SenseGuard AI Core Started (Mode: {'Cloud' if CLOUD_MODE else 'Hardware'})")
     
     yield
     
-    if not CLOUD_MODE:
-        try:
-            mouse_sensor.stop()
-            system_sensor.stop()
-            active_window_sensor.stop()
-        except:
-            pass
+    # Cleanup
+    try:
+        if mouse_sensor: mouse_sensor.stop()
+        if system_sensor: system_sensor.stop()
+        if active_window_sensor: active_window_sensor.stop()
+    except Exception as e:
+        logger.error(f"Error stopping sensors: {e}")
     logger.info("SenseGuard Sensors Stopped")
 
 app = FastAPI(title="SenseGuard AI Core", lifespan=lifespan)
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.websocket("/ws/telemetry")
 async def telemetry_websocket(websocket: WebSocket):
@@ -192,6 +211,10 @@ async def telemetry_websocket(websocket: WebSocket):
             # Keep connection alive
             await websocket.receive_text()
     except WebSocketDisconnect:
+        logger.info("Telemetry WebSocket disconnected")
+        manager.disconnect(websocket)
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
 
 @app.post("/action/optimize")
