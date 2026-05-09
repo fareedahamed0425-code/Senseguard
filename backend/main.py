@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -17,7 +18,7 @@ from agents.deepseek_agent import DeepSeekAgent
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("SenseGuard")
 
-app = FastAPI(title="SenseGuard AI Core")
+# app = FastAPI(title="SenseGuard AI Core") # Moved to lifespan section
 
 # Enable CORS
 app.add_middleware(
@@ -152,8 +153,8 @@ async def mock_sensor_loop():
         else:
             await asyncio.sleep(10)
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global loop
     loop = asyncio.get_running_loop()
     
@@ -169,9 +170,9 @@ async def startup_event():
     # Start the mock loop anyway as a heartbeat or fallback
     asyncio.create_task(mock_sensor_loop())
     logger.info(f"SenseGuard AI Core Started (Mode: {'Cloud' if CLOUD_MODE else 'Hardware'})")
-
-@app.on_event("shutdown")
-async def shutdown_event():
+    
+    yield
+    
     if not CLOUD_MODE:
         try:
             mouse_sensor.stop()
@@ -180,6 +181,8 @@ async def shutdown_event():
         except:
             pass
     logger.info("SenseGuard Sensors Stopped")
+
+app = FastAPI(title="SenseGuard AI Core", lifespan=lifespan)
 
 @app.websocket("/ws/telemetry")
 async def telemetry_websocket(websocket: WebSocket):
@@ -231,6 +234,9 @@ if __name__ == "__main__":
     while port < 8100:
         try:
             import socket
+            if port == 8001: # Reserved for DeepSeek vLLM
+                port += 1
+                continue
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(("0.0.0.0", port))
                 # If we get here, the port is free

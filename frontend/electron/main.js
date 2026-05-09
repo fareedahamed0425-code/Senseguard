@@ -128,7 +128,7 @@ function createWindows() {
 }
 
 function createTray() {
-  tray = new Tray(path.join(__dirname, '../public/vite.svg')); // Placeholder icon
+  tray = new Tray(path.join(__dirname, '../public/logo.svg')); // Use logo.svg instead of missing vite.svg
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show Dashboard', click: () => {
       mainWindow.show();

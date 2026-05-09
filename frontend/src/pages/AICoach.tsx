@@ -67,7 +67,7 @@ const AICoach: React.FC = () => {
                     <span className="font-mono text-[10px] text-on-surface-variant font-bold tracking-widest">{item.time}</span>
                     <span className={`font-label text-[10px] uppercase tracking-widest font-bold ${item.time === 'DEEPSEEK-V4' ? 'text-secondary' : item.type === 'positive' ? 'text-secondary' : item.type === 'warning' ? 'text-error' : 'text-on-surface-variant'}`}>{item.type}</span>
                   </div>
-                  <p className={`font-body-sm italic ${item.time === 'DEEPSEEK-V4' ? 'text-on-background font-bold not-italic' : 'text-on-surface'}`}>"{item.msg}"</p>
+                  <p className={`font-body-sm italic whitespace-pre-wrap ${item.time === 'DEEPSEEK-V4' ? 'text-on-background font-bold not-italic' : 'text-on-surface'}`}>"{item.msg}"</p>
                 </div>
               ))}
             </div>
