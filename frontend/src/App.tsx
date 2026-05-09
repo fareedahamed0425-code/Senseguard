@@ -133,7 +133,7 @@ function App() {
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  window.require('electron').ipcRenderer.send('window-minimize');
+                  (window as any).require('electron').ipcRenderer.send('window-minimize');
                 }}
                 className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
                 title="Minimize"
@@ -143,7 +143,7 @@ function App() {
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  window.require('electron').ipcRenderer.send('window-maximize');
+                  (window as any).require('electron').ipcRenderer.send('window-maximize');
                 }}
                 className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
                 title="Maximize"
@@ -153,7 +153,7 @@ function App() {
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  window.require('electron').ipcRenderer.send('window-close');
+                  (window as any).require('electron').ipcRenderer.send('window-close');
                 }}
                 className="p-1 hover:bg-red-500/20 hover:text-red-400 rounded transition-colors text-on-surface-variant pointer-events-auto"
                 title="Close"
