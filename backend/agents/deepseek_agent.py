@@ -10,6 +10,7 @@ class DeepSeekAgent:
     def __init__(self, endpoint="http://localhost:8001/v1"):
         self.endpoint = endpoint
         self.model = "deepseek-ai/DeepSeek-V4-Pro"
+        self._logged_connection_error = False
         
     async def analyze_live_data(self, system_data: Dict[str, Any], mouse_data: Dict[str, Any]) -> str:
         """
@@ -38,15 +39,20 @@ class DeepSeekAgent:
                     "max_tokens": 150
                 }
                 
-                async with session.post(f"{self.endpoint}/chat/completions", json=payload, timeout=10) as response:
+                async with session.post(f"{self.endpoint}/chat/completions", json=payload, timeout=5) as response:
                     if response.status == 200:
+                        self._logged_connection_error = False
                         result = await response.json()
                         return result['choices'][0]['message']['content'].strip()
                     else:
-                        logger.error(f"DeepSeek API error: {response.status}")
+                        if not self._logged_connection_error:
+                            logger.error(f"DeepSeek API error: {response.status}")
+                            self._logged_connection_error = True
                         return "DeepSeek Engine Offline: Check vLLM Server on Port 8001"
         except Exception as e:
-            logger.error(f"Failed to connect to vLLM: {e}")
+            if not self._logged_connection_error:
+                logger.error(f"Failed to connect to vLLM: {e}")
+                self._logged_connection_error = True
             return "DeepSeek Connection Timeout: Ensure vLLM is serving on port 8001"
 
     def _build_analysis_prompt(self, system_data: Dict[str, Any], mouse_data: Dict[str, Any]) -> str:

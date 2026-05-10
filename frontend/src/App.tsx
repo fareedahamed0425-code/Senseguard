@@ -148,39 +148,47 @@ function App() {
               />
             </div>
 
-            {/* Window Controls */}
-            <div className="flex items-center ml-2 border-l border-white/10 pl-4 gap-2">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  (window as any).require('electron').ipcRenderer.send('window-minimize');
-                }}
-                className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
-                title="Minimize"
-              >
-                <span className="material-symbols-outlined text-[18px]">remove</span>
-              </button>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  (window as any).require('electron').ipcRenderer.send('window-maximize');
-                }}
-                className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
-                title="Maximize"
-              >
-                <span className="material-symbols-outlined text-[18px]">check_box_outline_blank</span>
-              </button>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  (window as any).require('electron').ipcRenderer.send('window-close');
-                }}
-                className="p-1 hover:bg-red-500/20 hover:text-red-400 rounded transition-colors text-on-surface-variant pointer-events-auto"
-                title="Close"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
+            {/* Window Controls - Only show in Electron */}
+            {isElectron && (
+              <div className="flex items-center ml-2 border-l border-white/10 pl-4 gap-2">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    try {
+                      (window as any).require('electron').ipcRenderer.send('window-minimize');
+                    } catch (err) { console.warn('Electron IPC failed', err); }
+                  }}
+                  className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
+                  title="Minimize"
+                >
+                  <span className="material-symbols-outlined text-[18px]">remove</span>
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    try {
+                      (window as any).require('electron').ipcRenderer.send('window-maximize');
+                    } catch (err) { console.warn('Electron IPC failed', err); }
+                  }}
+                  className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
+                  title="Maximize"
+                >
+                  <span className="material-symbols-outlined text-[18px]">check_box_outline_blank</span>
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    try {
+                      (window as any).require('electron').ipcRenderer.send('window-close');
+                    } catch (err) { console.warn('Electron IPC failed', err); }
+                  }}
+                  className="p-1 hover:bg-red-500/20 hover:text-red-400 rounded transition-colors text-on-surface-variant pointer-events-auto"
+                  title="Close"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+            )}
           </div>
         </header>
 

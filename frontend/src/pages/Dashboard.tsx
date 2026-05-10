@@ -5,7 +5,7 @@ const Dashboard: React.FC = () => {
   const {
     apiScore, cpuUsage, gpus, ramUsagePct, ramUsedGb, ramTotalGb,
     mouseVelocityHistory, recommendation, connectionStatus, thermalThrottling, thermalMsg,
-    activeWindow, deepSeekAnalysis
+    activeWindow, deepSeekAnalysis, perfStatus
   } = useTelemetryStore();
 
   const gpuLoad = gpus[0]?.load ?? 0;

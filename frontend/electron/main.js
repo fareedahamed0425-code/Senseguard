@@ -129,7 +129,7 @@ function createWindows() {
 }
 
 function createTray() {
-  tray = new Tray(path.join(__dirname, '../public/logo.svg')); // Use logo.svg instead of missing vite.svg
+  tray = new Tray(path.join(__dirname, '../public/logo.png')); // Use logo.png instead of logo.svg for better compatibility
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show Dashboard', click: () => {
       mainWindow.show();
@@ -154,6 +154,8 @@ app.whenReady().then(() => {
   startBackend();
   createWindows();
   createTray();
+}).catch(err => {
+  console.error('Failed to initialize application:', err);
 });
 
 app.on('before-quit', () => {

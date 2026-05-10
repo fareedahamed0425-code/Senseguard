@@ -8,8 +8,14 @@ export const OverlayHUD: React.FC = () => {
 
   // Handle mouse pass-through for interactive elements
   const setIgnoreMouse = (ignore: boolean) => {
-    const electron = (window as any).require('electron');
-    electron.ipcRenderer.send('set-ignore-mouse-events', ignore, { forward: true });
+    try {
+      if (window.location.search.includes('electron') || (window as any).process?.versions?.electron) {
+        const electron = (window as any).require('electron');
+        electron.ipcRenderer.send('set-ignore-mouse-events', ignore, { forward: true });
+      }
+    } catch (err) {
+      console.warn('Failed to set ignore mouse events', err);
+    }
   };
 
   return (
@@ -41,19 +47,25 @@ export const OverlayHUD: React.FC = () => {
           {/* Window Controls */}
           <div className="flex items-center ml-2 border-l border-white/10 pl-2 gap-1" style={{ WebkitAppRegion: 'no-drag' } as any}>
             <button 
-              onClick={() => (window as any).require('electron').ipcRenderer.send('window-minimize')}
+              onClick={() => {
+                try { (window as any).require('electron').ipcRenderer.send('window-minimize'); } catch(e) {}
+              }}
               className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
             >
               <span className="material-symbols-outlined text-[14px]">remove</span>
             </button>
             <button 
-              onClick={() => (window as any).require('electron').ipcRenderer.send('window-maximize')}
+              onClick={() => {
+                try { (window as any).require('electron').ipcRenderer.send('window-maximize'); } catch(e) {}
+              }}
               className="p-1 hover:bg-white/10 rounded transition-colors text-on-surface-variant hover:text-secondary pointer-events-auto"
             >
               <span className="material-symbols-outlined text-[14px]">check_box_outline_blank</span>
             </button>
             <button 
-              onClick={() => (window as any).require('electron').ipcRenderer.send('window-close')}
+              onClick={() => {
+                try { (window as any).require('electron').ipcRenderer.send('window-close'); } catch(e) {}
+              }}
               className="p-1 hover:bg-red-500/20 hover:text-red-400 rounded transition-colors text-on-surface-variant pointer-events-auto"
             >
               <span className="material-symbols-outlined text-[14px]">close</span>
