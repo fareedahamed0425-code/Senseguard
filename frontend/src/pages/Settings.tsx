@@ -54,14 +54,43 @@ const Settings: React.FC = () => {
           </div>
 
           <div className="space-y-6 pt-8 border-t border-white/5">
-            <h3 className="font-h3 text-h3 text-on-background border-b border-white/5 pb-4">Telemetry Collection</h3>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-body-md text-on-surface font-bold">Anonymous Performance Uplift</p>
-                <p className="text-body-sm text-on-surface-variant opacity-60">Contribute anonymized aim data to improve the AI model.</p>
+            <h3 className="font-h3 text-h3 text-on-background border-b border-white/5 pb-4">Telemetry Connection</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">AI Core URL (WebSocket)</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="ws://127.0.0.1:8000/ws/telemetry"
+                    className="flex-1 bg-surface-container-lowest border border-white/10 text-on-surface p-3 rounded-lg outline-none focus:border-secondary font-mono text-sm"
+                    defaultValue={window.location.search.includes('backendUrl') ? new URLSearchParams(window.location.search).get('backendUrl') || '' : ''}
+                    id="backend-url-input"
+                  />
+                  <button 
+                    onClick={() => {
+                      const val = (document.getElementById('backend-url-input') as HTMLInputElement).value;
+                      if (val) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('backendUrl', val);
+                        window.location.href = url.toString();
+                      }
+                    }}
+                    className="bg-secondary text-on-secondary px-6 py-2 rounded font-bold uppercase text-[10px] tracking-widest"
+                  >
+                    Connect
+                  </button>
+                </div>
+                <p className="text-[10px] text-on-surface-variant opacity-60">Example: wss://your-backend-proxy.com/ws/telemetry</p>
               </div>
-              <div className="w-12 h-6 bg-secondary rounded-full relative cursor-pointer">
-                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-body-md text-on-surface font-bold">Auto-Reconnect</p>
+                  <p className="text-body-sm text-on-surface-variant opacity-60">Automatically attempt to re-establish dropped core links.</p>
+                </div>
+                <div className="w-12 h-6 bg-secondary rounded-full relative cursor-pointer">
+                  <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+                </div>
               </div>
             </div>
           </div>

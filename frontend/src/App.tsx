@@ -17,16 +17,16 @@ function App() {
   // Dynamic Port Discovery
   const urlParams = new URLSearchParams(window.location.search);
   const backendPort = urlParams.get('backendPort') || '8000';
+  const explicitBackend = urlParams.get('backendUrl'); // e.g. ?backendUrl=wss://my-backend.com
   
   // Environment Check
   const isElectron = window.location.search.includes('electron') || (window as any).process?.versions?.electron;
   const isWeb = !isElectron;
 
-  // URL Discovery: Prioritize env var, then fallback to current host if on web, else localhost
-  // If we are on Vercel (senseguard.vercel.app), we might want to connect to a sister backend (senseguard-api.render.com)
-  const WS_URL = import.meta.env.VITE_WS_URL || 
+  // URL Discovery: Prioritize explicit param, then env var, then fallback
+  const WS_URL = explicitBackend || import.meta.env.VITE_WS_URL || 
                 (isWeb && window.location.hostname !== 'localhost' 
-                  ? `wss://${window.location.hostname.replace('frontend', 'backend')}/ws/telemetry` // Example mapping
+                  ? `wss://${window.location.hostname.replace('frontend', 'backend')}/ws/telemetry` 
                   : `ws://127.0.0.1:${backendPort}/ws/telemetry`);
 
   useWebSocket(WS_URL);
@@ -102,7 +102,18 @@ function App() {
         </nav>
 
         <div className="px-6 mt-auto">
-          <button className="w-full bg-secondary/10 border border-secondary/30 text-secondary py-3 font-label text-label tracking-widest hover:bg-secondary hover:text-on-secondary transition-all active:scale-95 uppercase font-bold">
+          <button 
+            onClick={async () => {
+              try {
+                const backendUrl = WS_URL.replace('ws://', 'http://').replace('wss://', 'https://').split('/ws/')[0];
+                await fetch(`${backendUrl}/action/optimize`, { method: 'POST' });
+                alert('System optimization triggered successfully.');
+              } catch (err) {
+                alert('Connection to AI Core failed. Ensure the backend is running.');
+              }
+            }}
+            className="w-full bg-secondary/10 border border-secondary/30 text-secondary py-3 font-label text-label tracking-widest hover:bg-secondary hover:text-on-secondary transition-all active:scale-95 uppercase font-bold"
+          >
             RUN DIAGNOSTICS
           </button>
         </div>

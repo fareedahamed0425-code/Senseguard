@@ -2,16 +2,27 @@ import React from 'react';
 import { useTelemetryStore } from '../store/useTelemetryStore';
 
 const SystemHealth: React.FC = () => {
-  const { cpuUsage, ramUsagePct, ramUsedGb, ramTotalGb, gpus, deepSeekAnalysis } = useTelemetryStore();
+  const { cpuUsage, ramUsagePct, ramUsedGb, ramTotalGb, gpus, deepSeekAnalysis, perfStatus } = useTelemetryStore();
   const gpu = gpus[0] || { name: 'N/A', load: 0, temperature: 0 };
+  const isSimulated = perfStatus === 'simulated';
 
   return (
     <div className="p-margin space-y-gutter max-w-container-max mx-auto">
+      {/* Simulation Banner */}
+      {isSimulated && (
+        <div className="p-4 bg-yellow-500/10 border border-yellow-500/40 rounded-lg flex items-center justify-between mb-stack-lg">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-yellow-500">warning</span>
+            <span className="font-label text-label text-yellow-500 uppercase tracking-widest font-bold">Hardware Bridge Not Detected — Using Neural Simulation</span>
+          </div>
+        </div>
+      )}
+
       {/* Hero Bento Grid */}
       <div className="grid grid-cols-12 gap-gutter">
         {/* Real-time Monitor (CPU/GPU) */}
         <div className="col-span-12 lg:col-span-8 bg-white/5 backdrop-blur-xl border border-white/10 p-6 flex flex-col relative overflow-hidden rounded-lg">
-          <div className="absolute top-0 left-0 h-0.5 w-full bg-secondary opacity-20 animate-pulse"></div>
+          <div className={`absolute top-0 left-0 h-0.5 w-full bg-secondary opacity-20 animate-pulse ${isSimulated ? 'bg-yellow-500' : 'bg-secondary'}`}></div>
           <div className="flex justify-between items-start mb-8">
             <div>
               <h3 className="font-h3 text-h3 text-on-background font-bold uppercase tracking-tight">Processing Matrices</h3>

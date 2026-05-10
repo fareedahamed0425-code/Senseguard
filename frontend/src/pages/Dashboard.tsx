@@ -26,18 +26,50 @@ const Dashboard: React.FC = () => {
       .join(' ');
   }, [mouseVelocityHistory]);
 
+  const isSimulated = perfStatus === 'simulated';
+
   const connectionColor =
-    connectionStatus === 'connected' ? 'bg-secondary' :
+    connectionStatus === 'connected' ? (isSimulated ? 'bg-yellow-500' : 'bg-secondary') :
     connectionStatus === 'connecting' ? 'bg-yellow-400' :
     'bg-red-500';
 
   const connectionLabel =
-    connectionStatus === 'connected' ? 'Session Active' :
+    connectionStatus === 'connected' ? (isSimulated ? 'Simulated Mode' : 'Session Active') :
     connectionStatus === 'connecting' ? 'Connecting...' :
     'Disconnected';
 
+  const handleOptimize = async () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const backendPort = urlParams.get('backendPort') || '8000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || `http://localhost:${backendPort}`;
+      await fetch(`${backendUrl}/action/optimize`, { method: 'POST' });
+      alert('Optimization command sent to AI Core.');
+    } catch (err) {
+      console.error('Failed to trigger optimization', err);
+    }
+  };
+
   return (
     <div className="p-margin max-w-container-max mx-auto space-y-stack-lg">
+      {/* Simulation Mode Banner */}
+      {isSimulated && (
+        <div className="p-4 bg-yellow-500/10 border border-yellow-500/40 rounded-lg flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-yellow-500">sensors_off</span>
+            <span className="font-label text-label text-yellow-500 uppercase tracking-widest font-bold">
+              Web Version: Local AI Core not detected. Showing simulation data.
+            </span>
+          </div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="text-[10px] font-bold text-yellow-500 border border-yellow-500/30 px-3 py-1 hover:bg-yellow-500 hover:text-black transition-all uppercase tracking-widest"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+
       {/* Thermal Throttling Alert */}
       {thermalThrottling && (
         <div className="p-4 bg-error/10 border border-error/40 rounded-lg flex items-center gap-3">
@@ -53,12 +85,14 @@ const Dashboard: React.FC = () => {
           <p className="text-on-surface-variant font-body-md mt-2">Neural companion synchronized. Monitoring live competitive session.</p>
         </div>
         <div className="flex items-center gap-stack-md">
-          <div className="bg-secondary/10 px-4 py-2 border border-secondary/20 flex items-center gap-2 rounded-full">
+          <div className={`px-4 py-2 border flex items-center gap-2 rounded-full transition-all duration-500 ${isSimulated ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-secondary/10 border-secondary/20'}`}>
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isSimulated ? 'bg-yellow-500' : 'bg-secondary'}`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${isSimulated ? 'bg-yellow-500' : 'bg-secondary'}`}></span>
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">Live Scan</span>
+            <span className={`text-[10px] font-bold uppercase tracking-widest ${isSimulated ? 'text-yellow-500' : 'text-secondary'}`}>
+              {isSimulated ? 'Demo Mode' : 'AI Active'}
+            </span>
           </div>
           <div className="bg-surface-container-high px-4 py-2 border border-white/10 flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full animate-pulse ${connectionColor}`}></div>
