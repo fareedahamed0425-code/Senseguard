@@ -18,9 +18,17 @@ function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const backendPort = urlParams.get('backendPort') || '8000';
   
-  // Connect to the Python backend (Supports both localhost and 127.0.0.1 for maximum compatibility)
-  // In Web Mode, if port 8000 fails, the hook will try to reconnect.
-  const WS_URL = import.meta.env.VITE_WS_URL || `ws://127.0.0.1:${backendPort}/ws/telemetry`;
+  // Environment Check
+  const isElectron = window.location.search.includes('electron') || (window as any).process?.versions?.electron;
+  const isWeb = !isElectron;
+
+  // URL Discovery: Prioritize env var, then fallback to current host if on web, else localhost
+  // If we are on Vercel (senseguard.vercel.app), we might want to connect to a sister backend (senseguard-api.render.com)
+  const WS_URL = import.meta.env.VITE_WS_URL || 
+                (isWeb && window.location.hostname !== 'localhost' 
+                  ? `wss://${window.location.hostname.replace('frontend', 'backend')}/ws/telemetry` // Example mapping
+                  : `ws://127.0.0.1:${backendPort}/ws/telemetry`);
+
   useWebSocket(WS_URL);
 
   // Simple route detection via URL params (standard Electron trick for multiple windows)

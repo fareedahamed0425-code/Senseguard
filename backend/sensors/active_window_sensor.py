@@ -18,8 +18,14 @@ import time
 import psutil
 import os
 
-user32 = ctypes.windll.user32
-kernel32 = ctypes.windll.kernel32
+try:
+    user32 = ctypes.windll.user32
+    kernel32 = ctypes.windll.kernel32
+    IS_WINDOWS = True
+except AttributeError:
+    user32 = None
+    kernel32 = None
+    IS_WINDOWS = False
 
 # Known game/app keywords for quick detection
 GAME_KEYWORDS = {
@@ -56,6 +62,9 @@ APP_ICONS = {
 
 def _get_foreground_info():
     """Returns (window_title, process_name, pid) for the current foreground window."""
+    if not IS_WINDOWS:
+        return "Cloud Environment", "python.exe", 0
+
     hwnd = user32.GetForegroundWindow()
     if not hwnd:
         return "Desktop", "explorer.exe", 0

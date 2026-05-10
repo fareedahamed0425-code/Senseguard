@@ -50,12 +50,14 @@ class ConnectionManager:
 
 # Global state
 loop = None
-CLOUD_MODE = False
 manager = ConnectionManager()
 sensitivity_agent = SensitivityAgent()
 system_agent = SystemAgent()
 performance_agent = PerformanceAgent()
 deepseek_agent = DeepSeekAgent()
+
+# Cloud detection: If we are on a common cloud provider or explicitly set via ENV
+CLOUD_MODE = os.getenv("MODE") == "CLOUD" or os.getenv("RENDER") is not None or os.getenv("VERCEL") is not None
 
 # Global state to hold latest metrics for DeepSeek
 latest_system_metrics = {}
@@ -147,14 +149,35 @@ async def mock_sensor_loop():
             # Mock System Data
             mock_sys = {
                 "type": "system_metrics",
-                "cpu_usage": random.uniform(10, 60),
-                "ram_usage": random.uniform(30, 70),
-                "ram_used_gb": 8.5,
+                "cpu_usage": random.uniform(15, 45),
+                "ram_usage": random.uniform(40, 60),
+                "ram_used_gb": 7.2,
                 "ram_total_gb": 16.0,
-                "gpus": [{"id": 0, "name": "Cloud GPU", "load": random.uniform(0, 100), "temperature": random.uniform(40, 70)}]
+                "gpus": [{"id": 0, "name": "NVIDIA GeForce RTX 4080 (Cloud)", "load": random.uniform(20, 80), "temperature": random.uniform(55, 72)}]
             }
             on_system_data(mock_sys)
-            await asyncio.sleep(2)
+            
+            # Mock Mouse Data
+            mock_mouse = {
+                "type": "mouse_move",
+                "velocity": random.uniform(100, 1500),
+                "timestamp": asyncio.get_event_loop().time()
+            }
+            on_mouse_data(mock_mouse)
+
+            # Mock Active Window occasionally
+            if random.random() > 0.95:
+                on_active_window({
+                    "type": "active_window",
+                    "window_title": "VALORANT",
+                    "process_name": "VALORANT-Win64-Shipping.exe",
+                    "display_name": "VALORANT",
+                    "icon": "🎯",
+                    "pid": 1234,
+                    "is_game": True
+                })
+
+            await asyncio.sleep(1.5)
         else:
             await asyncio.sleep(10)
 
@@ -164,29 +187,29 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_running_loop()
     
     # Initialize Sensors inside lifespan to avoid blocking the main thread
-    try:
-        mouse_sensor = MouseSensor(callback=on_mouse_data)
-        mouse_sensor.start()
-        logger.info("Mouse sensor started")
-    except Exception as e:
-        logger.warning(f"Mouse sensor failed: {e}")
+    if not CLOUD_MODE:
+        try:
+            mouse_sensor = MouseSensor(callback=on_mouse_data)
+            mouse_sensor.start()
+            logger.info("Mouse sensor started")
+        except Exception as e:
+            logger.warning(f"Mouse sensor failed: {e}")
 
-    try:
-        system_sensor = SystemSensor(callback=on_system_data, interval=2.0)
-        system_sensor.start()
-        logger.info("System sensor started")
-    except Exception as e:
-        logger.warning(f"System sensor failed: {e}")
+        try:
+            system_sensor = SystemSensor(callback=on_system_data, interval=2.0)
+            system_sensor.start()
+            logger.info("System sensor started")
+        except Exception as e:
+            logger.warning(f"System sensor failed: {e}")
 
-    try:
-        active_window_sensor = ActiveWindowSensor(callback=on_active_window, interval=1.0)
-        active_window_sensor.start()
-        logger.info("Active window sensor started")
-    except Exception as e:
-        logger.warning(f"Active window sensor failed: {e}")
-
-    CLOUD_MODE = (mouse_sensor is None and system_sensor is None)
-    
+        try:
+            active_window_sensor = ActiveWindowSensor(callback=on_active_window, interval=1.0)
+            active_window_sensor.start()
+            logger.info("Active window sensor started")
+        except Exception as e:
+            logger.warning(f"Active window sensor failed: {e}")
+    else:
+        logger.info("Running in CLOUD_MODE: Hardware sensors disabled, simulation active.")
 
     # Start the mock loop as heartbeat/fallback
     asyncio.create_task(mock_sensor_loop())
@@ -245,46 +268,29 @@ async def get_active_window():
     return _current_active_window
 
 if __name__ == "__main__":
-    import os
+    # For cloud deployment, use the PORT env var
+    port = int(os.getenv("PORT", 8000))
     
-    # Run uvicorn on port 0 to get any available port
-    config = uvicorn.Config(app, host="0.0.0.0", port=0)
-    server = uvicorn.Server(config)
-    
-    # We need to extract the port after the server starts
-    # A simpler way for this MVP is to try 8000, 8001, 8002...
-    # or just use 0 and read it from the server's socket.
-    
-    original_run = server.run
-    
-    def save_port_and_run():
-        # This is a bit tricky with uvicorn.run because it blocks.
-        # Let's use a simpler approach: try ports in a loop.
-        pass
-
-    # Simple robust approach: Try 8000, if fails try 8001...
-    # Simple robust approach: Try 8000, 8002, 8003... (8001 reserved for DeepSeek)
-    port = 8000
-    while port < 8100:
-        if port == 8001:
-            port += 1
-            continue
-            
-        try:
-            import socket
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(("0.0.0.0", port))
-            
-            # Save the port for Electron/Frontend
-            port_file = os.path.join(os.path.dirname(__file__), "backend-port.txt")
+    # If explicitly running via python main.py, we still do the dynamic port search if on localhost
+    if os.getenv("PORT") is None:
+        port = 8000
+        while port < 8100:
+            if port == 8001:
+                port += 1
+                continue
             try:
+                import socket
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.bind(("0.0.0.0", port))
+                
+                # Save the port for Electron/Frontend
+                port_file = os.path.join(os.path.dirname(__file__), "backend-port.txt")
                 with open(port_file, "w") as f:
                     f.write(str(port))
-            except Exception as e:
-                print(f"Error writing port file: {e}")
-            
-            print(f"Starting backend on port {port}")
-            uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
-            break
-        except OSError:
-            port += 1
+                break
+            except OSError:
+                port += 1
+    
+    print(f"Starting backend on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+
