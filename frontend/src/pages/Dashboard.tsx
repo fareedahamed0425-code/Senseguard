@@ -38,17 +38,6 @@ const Dashboard: React.FC = () => {
     connectionStatus === 'connecting' ? 'Connecting...' :
     'Disconnected';
 
-  const handleOptimize = async () => {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const backendPort = urlParams.get('backendPort') || '8000';
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || `http://localhost:${backendPort}`;
-      await fetch(`${backendUrl}/action/optimize`, { method: 'POST' });
-      alert('Optimization command sent to AI Core.');
-    } catch (err) {
-      console.error('Failed to trigger optimization', err);
-    }
-  };
 
   return (
     <div className="p-margin max-w-container-max mx-auto space-y-stack-lg">

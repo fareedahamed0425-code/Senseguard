@@ -21,7 +21,6 @@ function App() {
   
   // Environment Check
   const isElectron = window.location.search.includes('electron') || (window as any).process?.versions?.electron;
-  const { apiScore, accuracy } = useTelemetryStore();
 
   // URL Discovery: Prioritize explicit param, then env var, then fallback
   // URL Discovery: prioritize localhost for auto-connection to local system
