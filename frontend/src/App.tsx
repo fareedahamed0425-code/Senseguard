@@ -18,8 +18,9 @@ function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const backendPort = urlParams.get('backendPort') || '8000';
   
-  // Connect to the Python backend (Dynamic for Cloud Deployment)
-  const WS_URL = import.meta.env.VITE_WS_URL || `ws://localhost:${backendPort}/ws/telemetry`;
+  // Connect to the Python backend (Supports both localhost and 127.0.0.1 for maximum compatibility)
+  // In Web Mode, if port 8000 fails, the hook will try to reconnect.
+  const WS_URL = import.meta.env.VITE_WS_URL || `ws://127.0.0.1:${backendPort}/ws/telemetry`;
   useWebSocket(WS_URL);
 
   // Simple route detection via URL params (standard Electron trick for multiple windows)

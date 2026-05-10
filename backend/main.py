@@ -106,6 +106,16 @@ def on_active_window(data):
     global _current_active_window
     _current_active_window = data
     logger.info(f"Active window: [{data['process_name']}] {data['display_name']}")
+    
+    # Auto-Optimize if game detected
+    if data.get("is_game"):
+        try:
+            success, msg = system_agent.optimize_for_gaming()
+            if success:
+                logger.info(f"Auto-optimized system for {data['display_name']}")
+        except Exception as e:
+            logger.warning(f"Auto-optimization failed: {e}")
+
     if loop and loop.is_running():
         asyncio.run_coroutine_threadsafe(manager.broadcast(data), loop)
 
@@ -253,26 +263,28 @@ if __name__ == "__main__":
         pass
 
     # Simple robust approach: Try 8000, if fails try 8001...
+    # Simple robust approach: Try 8000, 8002, 8003... (8001 reserved for DeepSeek)
     port = 8000
     while port < 8100:
+        if port == 8001:
+            port += 1
+            continue
+            
         try:
             import socket
-            if port == 8001: # Reserved for DeepSeek vLLM
-                port += 1
-                continue
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(("0.0.0.0", port))
-                # If we get here, the port is free
             
             # Save the port for Electron/Frontend
             port_file = os.path.join(os.path.dirname(__file__), "backend-port.txt")
-            if os.path.exists(port_file):
-                os.remove(port_file)
+            try:
+                with open(port_file, "w") as f:
+                    f.write(str(port))
+            except Exception as e:
+                print(f"Error writing port file: {e}")
             
-            with open(port_file, "w") as f:
-                f.write(str(port))
-            
-            uvicorn.run(app, host="0.0.0.0", port=port)
+            print(f"Starting backend on port {port}")
+            uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
             break
         except OSError:
             port += 1

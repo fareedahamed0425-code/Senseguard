@@ -17,15 +17,10 @@ SenseGuard AI is a production-grade hackathon MVP designed to optimize both play
 - **Database:** SQLite (SQLModel) for session persistence.
 
 ## 🏃 Quick Start
-1. Run `setup.bat` to install dependencies.
-2. In one terminal, start the Vite dev server:
-   ```bash
-   cd frontend && npm run dev
-   ```
-3. In another terminal, launch the Electron app:
-   ```bash
-   cd frontend && npm run electron
-   ```
+1. Clone the repository.
+2. Double-click `run.bat` (Windows).
+   - This will automatically install dependencies, start the AI Core backend, and launch the SenseGuard dashboard and overlay.
+3. The app will immediately start diagnosing your system and providing real-time performance insights.
 
 ## 📂 Architecture
 - `/backend`: Sensor layer, AI agents, and FastAPI orchestrator.

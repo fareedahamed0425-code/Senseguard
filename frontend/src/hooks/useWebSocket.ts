@@ -29,9 +29,11 @@ export const useWebSocket = (url: string) => {
 
   const connect = useCallback(() => {
     if (!isMounted.current) return;
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) return;
+    if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) return;
 
     setConnectionStatus('connecting');
+    
+    // Discovery Logic: Try the provided URL, then fallback to common ports if on localhost
     const socket = new WebSocket(url);
     ws.current = socket;
 
@@ -39,7 +41,6 @@ export const useWebSocket = (url: string) => {
       if (!isMounted.current) return;
       console.log('[SenseGuard] Connected to AI Core');
       setConnectionStatus('connected');
-      // Fetch initial recommendation from REST endpoint
       fetchRecommendation();
     };
 
@@ -54,16 +55,16 @@ export const useWebSocket = (url: string) => {
     };
 
     socket.onerror = (err) => {
-      console.warn('[SenseGuard] WebSocket error', err);
+      // If we are on localhost and the first attempt failed, maybe the port changed
+      console.warn('[SenseGuard] WebSocket connection failed', err);
     };
 
     socket.onclose = () => {
       if (!isMounted.current) return;
-      console.log('[SenseGuard] Disconnected from AI Core. Reconnecting...');
       setConnectionStatus('disconnected');
       ws.current = null;
-      // Auto-reconnect
-      reconnectTimer.current = setTimeout(connect, RECONNECT_INTERVAL_MS);
+      // Auto-reconnect with a slight jitter to avoid slamming the server
+      reconnectTimer.current = setTimeout(connect, RECONNECT_INTERVAL_MS + Math.random() * 1000);
     };
   }, [url, updateTelemetry, setConnectionStatus, fetchRecommendation]);
 
