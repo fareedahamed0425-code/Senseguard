@@ -21,13 +21,12 @@ function App() {
   
   // Environment Check
   const isElectron = window.location.search.includes('electron') || (window as any).process?.versions?.electron;
-  const isWeb = !isElectron;
+  const { apiScore, accuracy } = useTelemetryStore();
 
   // URL Discovery: Prioritize explicit param, then env var, then fallback
+  // URL Discovery: prioritize localhost for auto-connection to local system
   const WS_URL = explicitBackend || import.meta.env.VITE_WS_URL || 
-                (isWeb && window.location.hostname !== 'localhost' 
-                  ? `wss://${window.location.hostname.replace('frontend', 'backend')}/ws/telemetry` 
-                  : `ws://127.0.0.1:${backendPort}/ws/telemetry`);
+                `ws://127.0.0.1:${backendPort}/ws/telemetry`;
 
   useWebSocket(WS_URL);
 

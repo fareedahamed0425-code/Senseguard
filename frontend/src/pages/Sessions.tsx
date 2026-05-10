@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTelemetryStore } from '../store/useTelemetryStore';
 
 const Sessions: React.FC = () => {
-  const { apiScore } = useTelemetryStore();
+  const { apiScore, accuracy } = useTelemetryStore();
   const [selectedSession, setSelectedSession] = useState(0);
 
   const sessions = [
@@ -137,7 +137,7 @@ const Sessions: React.FC = () => {
               </div>
               <div className="space-y-6">
                 <p className="font-body-md text-on-surface leading-relaxed italic">
-                  "Analytical review of session {active.title} indicates a strong correlation between your positioning in Sector-B7 and successful kinetic outcomes. Accuracy consistency maintained at {active.id === 0 ? apiScore.toFixed(1) : '92.4'}%."
+                  "Analytical review of session {active.title} indicates a strong correlation between your positioning in Sector-B7 and successful kinetic outcomes. Accuracy consistency maintained at {active.id === 0 ? accuracy.toFixed(1) : '92.4'}%."
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex gap-4 items-start">

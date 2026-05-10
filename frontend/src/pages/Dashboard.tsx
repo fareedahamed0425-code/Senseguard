@@ -3,7 +3,7 @@ import { useTelemetryStore } from '../store/useTelemetryStore';
 
 const Dashboard: React.FC = () => {
   const {
-    apiScore, cpuUsage, gpus, ramUsagePct, ramUsedGb, ramTotalGb,
+    apiScore, accuracy, cpuUsage, gpus, ramUsagePct, ramUsedGb, ramTotalGb,
     mouseVelocityHistory, recommendation, connectionStatus, thermalThrottling, thermalMsg,
     activeWindow, deepSeekAnalysis, perfStatus
   } = useTelemetryStore();
@@ -184,9 +184,16 @@ const Dashboard: React.FC = () => {
                   style={{ width: `${apiScore}%` }}
                 ></div>
               </div>
-              <div className="flex justify-between text-[10px] font-label text-on-surface-variant uppercase tracking-widest font-bold">
-                <span>Baseline: 82%</span>
-                <span className="text-secondary">+{Math.max(0, apiScore - 82).toFixed(1)}% Improvement</span>
+              
+              <div className="flex items-baseline gap-2 pt-2">
+                <span className="font-h1 text-h1 text-tertiary font-black tracking-tighter">{accuracy.toFixed(0)}%</span>
+                <span className="font-label text-label text-tertiary uppercase tracking-widest font-bold">Precision Accuracy</span>
+              </div>
+              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-tertiary shadow-[0_0_10px_rgba(212,163,255,0.5)] transition-all duration-1000 ease-out"
+                  style={{ width: `${accuracy}%` }}
+                ></div>
               </div>
             </div>
             <div className="bg-primary-container/20 border border-secondary/30 p-4 rounded relative overflow-hidden flex flex-col gap-3">

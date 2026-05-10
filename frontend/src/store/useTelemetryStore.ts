@@ -19,6 +19,7 @@ interface TelemetryState {
 
   // Mouse / Aim Performance Index
   apiScore: number;
+  accuracy: number;
   mouseVelocity: number;
   mouseVelocityHistory: number[]; // last N velocities for live graph
 
@@ -61,6 +62,7 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
   gpus: [],
 
   apiScore: 100,
+  accuracy: 100,
   mouseVelocity: 0,
   mouseVelocityHistory: [],
 
@@ -107,6 +109,7 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
       set({
         mouseVelocity: newVelocity,
         apiScore: data.api_score ?? get().apiScore,
+        accuracy: data.accuracy ?? get().accuracy,
         instability: data.instability ?? get().instability,
         mouseVelocityHistory: history,
         lastUpdate: Date.now(),

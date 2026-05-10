@@ -81,6 +81,7 @@ def on_mouse_data(data):
     global latest_mouse_metrics
     api_score = sensitivity_agent.process_mouse_event(data)
     data["api_score"] = api_score
+    data["accuracy"] = sensitivity_agent.accuracy
     data["instability"] = sensitivity_agent.instability_score
     latest_mouse_metrics = data
     
@@ -145,41 +146,8 @@ async def mock_sensor_loop():
     """Generates fake data when running in the cloud (Render/Vercel)"""
     import random
     while True:
-        if CLOUD_MODE:
-            # Mock System Data
-            mock_sys = {
-                "type": "system_metrics",
-                "cpu_usage": random.uniform(15, 45),
-                "ram_usage": random.uniform(40, 60),
-                "ram_used_gb": 7.2,
-                "ram_total_gb": 16.0,
-                "gpus": [{"id": 0, "name": "NVIDIA GeForce RTX 4080 (Cloud)", "load": random.uniform(20, 80), "temperature": random.uniform(55, 72)}]
-            }
-            on_system_data(mock_sys)
-            
-            # Mock Mouse Data
-            mock_mouse = {
-                "type": "mouse_move",
-                "velocity": random.uniform(100, 1500),
-                "timestamp": asyncio.get_event_loop().time()
-            }
-            on_mouse_data(mock_mouse)
-
-            # Mock Active Window occasionally
-            if random.random() > 0.95:
-                on_active_window({
-                    "type": "active_window",
-                    "window_title": "VALORANT",
-                    "process_name": "VALORANT-Win64-Shipping.exe",
-                    "display_name": "VALORANT",
-                    "icon": "🎯",
-                    "pid": 1234,
-                    "is_game": True
-                })
-
-            await asyncio.sleep(1.5)
-        else:
-            await asyncio.sleep(10)
+        # Mock loop disabled to avoid "false true data" as per user request
+        await asyncio.sleep(60)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -260,6 +228,7 @@ async def get_status():
     return {
         "status": "running",
         "api_score": sensitivity_agent.api_score,
+        "accuracy": sensitivity_agent.accuracy,
         "recommendation": sensitivity_agent.get_recommendation()
     }
 

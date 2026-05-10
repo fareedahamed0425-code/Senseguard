@@ -1,6 +1,9 @@
 import React from 'react';
+import { useTelemetryStore } from '../store/useTelemetryStore';
 
 const Profile: React.FC = () => {
+  const { accuracy } = useTelemetryStore();
+  
   return (
     <div className="p-margin max-w-container-max mx-auto space-y-stack-lg">
       <header className="flex flex-col md:flex-row items-center gap-8 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-lg relative overflow-hidden">
@@ -42,7 +45,7 @@ const Profile: React.FC = () => {
         <section className="md:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-gutter">
           {[
             { label: 'Total Playtime', value: '1,240h', icon: 'schedule' },
-            { label: 'AI Accuracy Avg', value: '92.4%', icon: 'target' },
+            { label: 'AI Accuracy Avg', value: `${accuracy.toFixed(1)}%`, icon: 'target' },
             { label: 'Sessions Logged', value: '842', icon: 'history' }
           ].map((stat, i) => (
             <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-lg text-center space-y-2">
